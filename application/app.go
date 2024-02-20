@@ -12,19 +12,21 @@ import (
 type App struct {
 	router http.Handler
 	rdb    *redis.Client
+	config Config
 }
 
-func New() *App {
+func New(config Config) *App {
 	app := &App{
-		router: loadRouter(),
-		rdb:    redis.NewClient(&redis.Options{Password: "galau712"}),
+		rdb: redis.NewClient(&redis.Options{Addr: config.RedisAddress, Password: "galau712"}),
 	}
+
+	app.loadRouter()
 
 	return app
 }
 
 func (a *App) Start(ctx context.Context) error {
-	server := &http.Server{Addr: ":4000", Handler: a.router}
+	server := &http.Server{Addr: fmt.Sprintf(":%d", a.config.ServerPort), Handler: a.router}
 
 	err := a.rdb.Ping(ctx).Err()
 	if err != nil {
